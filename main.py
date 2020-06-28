@@ -35,23 +35,11 @@ def main():
             choose = input('Hai inserito una scelta non accettata. Inserisci 1,2,3 o 4:')
 
 
-def generate_thumbnail(in_filename, out_filename, time, width):
-    try:
-        (
-            ffmpeg
-            .input(in_filename, ss=time)
-            .filter('scale', width, -1)
-            .output(out_filename, vframes=1)
-            .overwrite_output()
-            .run(capture_stdout=True, capture_stderr=True)
-        )
-    except ffmpeg.Error as e:
-        print(e.stderr.decode(), file=sys.stderr)
-        sys.exit(1)
-
-
 def download(yt, separate_tracks=False, tag=None, audio_only=False):
     file_name = yt.title + '.mp4'
+
+    if file_name.find("\"") != -1:
+        file_name = file_name.replace('"', '``')
 
     if separate_tracks:
         print('\nDownload in corso...', end='')
@@ -65,8 +53,12 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
 
         # Cross-platform ffmpeg
         if platform.system() == 'Windows':
-            command = "ffmpeg -i {video} -i {audio} -loglevel warning -c:v copy -c:a aac {output}".\
-                format(video='../video_file.mp4', audio='../audio_file.mp4', output="\"../"+file_name+"\"")
+            if platform.architecture()[0] == '64bit':
+                command = "ffmpeg_x64 -i {video} -i {audio} -loglevel warning -c:v copy -c:a aac {output}". \
+                    format(video='../video_file.mp4', audio='../audio_file.mp4', output="\"../" + file_name + "\"")
+            else:
+                command = "ffmpeg_x86 -i {video} -i {audio} -loglevel warning -c:v copy -c:a aac {output}". \
+                    format(video='../video_file.mp4', audio='../audio_file.mp4', output="\"../" + file_name + "\"")
             subprocess.call(command, shell=True, cwd='./ffmpeg/')
         else:
             video_stream = ffmpeg.input('./video_file.mp4')
@@ -76,8 +68,6 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
         print('finito!')
         os.remove('./video_file.mp4')
         os.remove('./audio_file.mp4')
-
-        # generate_thumbnail(file_name, 'preview.png', 1, 1280)
     else:
         print('\nDownload in corso...', end='')
         if audio_only:
@@ -93,14 +83,18 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             print("\nMuxing in corso...", end='')
 
             if platform.system() == 'Windows':
-                command = "ffmpeg -i {video} -f mp3 -ab 192000 -vn {audio} -loglevel warning".\
-                    format(video="\"../"+file_name+"\"", audio="\"../"+file_name.replace('mp4', 'mp3')+"\"")
+                if platform.architecture()[0] == '64bit':
+                    command = "ffmpeg_x64 -i {video} -f mp3 -ab 192000 -vn {audio} -loglevel warning". \
+                        format(video="\"../" + file_name + "\"", audio="\"../" + file_name.replace('mp4', 'mp3') + "\"")
+                else:
+                    command = "ffmpeg_x86 -i {video} -f mp3 -ab 192000 -vn {audio} -loglevel warning". \
+                        format(video="\"../" + file_name + "\"", audio="\"../" + file_name.replace('mp4', 'mp3') + "\"")
                 subprocess.call(command, shell=True, cwd='./ffmpeg/')
             else:
                 (
                     ffmpeg
-                        .input('./'+file_name)
-                        .output('./'+file_name.replace('mp4', 'mp3'))
+                        .input('./' + file_name)
+                        .output('./' + file_name.replace('mp4', 'mp3'))
                         .global_args('-loglevel', 'error')
                         .global_args('-f', 'mp3')
                         .global_args('-ab', '192000')
@@ -133,10 +127,10 @@ def choosing_video(choose, links):
             stream = str(yt.streams.filter(subtype='mp4', progressive=False))
             stream = stream[1:]
             stream = stream[:-1]
-            streamlist = stream.split(", ")
+            stream_list = stream.split(", ")
             print("\nTutte le opzioni disponibili per il download:\n")
             index = 1
-            for stream in streamlist:
+            for stream in stream_list:
                 print(index, ')', stream)
                 index += 1
 
