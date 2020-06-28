@@ -52,6 +52,8 @@ def generate_thumbnail(in_filename, out_filename, time, width):
 
 
 def download(yt, separate_tracks=False, tag=None, audio_only=False):
+    file_name = yt.title + '.mp4'
+
     if separate_tracks:
         print('\nDownload in corso...', end='')
         ys = yt.streams.get_by_itag(tag)
@@ -59,8 +61,6 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
         ys = yt.streams.get_audio_only()
         ys.download(filename='audio_file')
         print('finito!')
-
-        file_name = yt.title + '.mp4'
 
         print("\nMuxing in corso...", end='')
 
@@ -84,10 +84,34 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
         if audio_only:
             ys = yt.streams.get_audio_only()
             ys.download()
+            print('finito!')
+            os.chdir('./')
+            listdir = os.listdir(os.getcwd())
+            for i in listdir:
+                if i.find('.mp4') != -1:
+                    os.rename(i, file_name)
+
+            print("\nMuxing in corso...", end='')
+
+            if platform.system() == 'Windows':
+                command = "ffmpeg -i {video} -f mp3 -ab 192000 -vn {audio} -loglevel warning".\
+                    format(video="\"../"+file_name+"\"", audio="\"../"+file_name.replace('mp4', 'mp3')+"\"")
+                subprocess.call(command, shell=True, cwd='./ffmpeg/')
+            else:
+                (
+                    ffmpeg
+                        .input('./'+file_name)
+                        .output('./'+file_name.replace('mp4', 'mp3'))
+                        .global_args('-loglevel', 'error')
+                        .global_args('-vn')
+                        .run()
+                )
+            print('finito!')
+            os.remove(file_name)
         else:
             ys = yt.streams.get_highest_resolution()
             ys.download()
-        print('finito!')
+            print('finito!')
 
 
 def choosing_video(choose, links):
