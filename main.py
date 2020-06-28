@@ -2,10 +2,9 @@ from pytube import YouTube
 import sys
 import platform
 import os
+import subprocess
 
-if platform.system() == "Windows":
-    import subprocess
-else:
+if platform.system() != "Windows":
     import ffmpeg
 
 
@@ -103,7 +102,8 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                         .input('./'+file_name)
                         .output('./'+file_name.replace('mp4', 'mp3'))
                         .global_args('-loglevel', 'error')
-                        .global_args('-vn')
+                        .global_args('-f', 'mp3')
+                        .global_args('-ab', '192000')
                         .run()
                 )
             print('finito!')
