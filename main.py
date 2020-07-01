@@ -1,8 +1,9 @@
 from pytube import YouTube
-import sys
 import platform
-import os
+import os, sys
+from exitstatus import ExitStatus
 import subprocess
+import re
 
 if platform.system() != "Windows":
     import ffmpeg
@@ -12,11 +13,19 @@ def main():
     # Asking for all the video links
     n = int(input("Inserisci il numero di video da scaricare da YouTube:   "))
     links = []
-    print("\nInserisci i link uno per volta premendo invio per inserirlo:")
+    print("\nInserisci i link uno per volta premendo invio per inserirlo (Premi q per uscire):")
 
-    for i in range(0, n):
-        temp = input()
-        links.append(temp)
+    for i in range(n):
+        while True:
+            url = input()
+            match = re.match(r'^(https?://)?((www\.)?youtube\.com|youtu\.?be)/.+$', url)
+            if match:
+                links.append(url)
+                break
+            elif url == 'q':
+                sys.exit(ExitStatus.success)
+            else:
+                print('Inserisci un link valido!')
 
     choose = input('Vuoi scaricare direttamente o scegliere il formato?\n1) Scarica direttamente (Max. 720p)\n'
                    '2) Scegli il formato\n3) Scarica solo audio\n4) Esci\nInserisci scelta: ')
@@ -34,12 +43,18 @@ def main():
         else:
             choose = input('Hai inserito una scelta non accettata. Inserisci 1,2,3 o 4:')
 
+    sys.exit(ExitStatus.success)
+
 
 def download(yt, separate_tracks=False, tag=None, audio_only=False):
     file_name = yt.title + '.mp4'
 
     if file_name.find("\"") != -1:
         file_name = file_name.replace('"', '``')
+    elif file_name.find("\\") != -1:
+        file_name = file_name.replace('\\', '-')
+    elif file_name.find('/') != -1:
+        file_name = file_name.replace('/', '-')
 
     if separate_tracks:
         print('\nDownload in corso...', end='')
@@ -117,21 +132,22 @@ def choosing_video(choose, links):
         print("\nDettagli del video ", i + 1, "\n")
         print("Titolo del video:          ", yt.title)
         print("Numero di visualizzazioni: ", yt.views)
-        print("Lunghezza del video:       ", yt.length, "seconds")
+        print("Lunghezza del video:       ", yt.length, "secondi")
 
         print("\nDownloading video number ", i + 1)
 
         if choose == '1':
+            # Download directly without muxing from youtube in 720p
             download(yt)
         elif choose == '2':
-            stream = str(yt.streams.filter(subtype='mp4', progressive=False))
-            stream = stream[1:]
-            stream = stream[:-1]
-            stream_list = stream.split(", ")
+            # Filters results for type video, mp4.
+            stream = yt.streams.filter(type='video', subtype='mp4', progressive=False)
+            stream_dict = stream.itag_index
+
             print("\nTutte le opzioni disponibili per il download:\n")
             index = 1
-            for stream in stream_list:
-                print(index, ')', stream)
+            for key, value in stream_dict.items():
+                print(index, ')', value)
                 index += 1
 
             tag = int(input("\nInserisci l'itag del tuo stream preferito da scaricare:   "))
