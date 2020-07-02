@@ -1,9 +1,17 @@
-from pytube import YouTube
 import platform
-import os, sys
-from exitstatus import ExitStatus
+import os
+import sys
 import subprocess
 import re
+
+# Add vendor directory to module search path
+parent_dir = os.path.abspath(os.path.dirname(__file__))
+vendor_dir = os.path.join(parent_dir, 'vendor')
+
+sys.path.append(vendor_dir)
+
+from pytube import YouTube
+from exitstatus import ExitStatus
 
 if platform.system() != "Windows":
     import ffmpeg
