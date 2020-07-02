@@ -26,16 +26,17 @@ git clone https://github.com/Cioscos/youtube-downloader.git
 
 If you get an error message, you may need to install [Visual C++ Redistributable](https://support.microsoft.com/en-ca/help/2977003/the-latest-supported-visual-c-downloads).
 
-## Linux
-If you are on Linux you have to install Python from your package manager with FFmpeg too.
+## How to run
+### On windows
+To run YouTube-Downloader without create an executable file, you just need to install Python 3.X (link below)
+Then you can double-click on main.py file in the root directory! Take care that you don't have to move the position of main.py or of the other folder.
 
-#### On Ubuntu
+### On Linux
+If you are on Linux you have to install Python from your package manager with FFmpeg too. Next it's the same of Windows.
+
+#### Example on Ubuntu system
 ```
 > sudo apt install ffmpeg
-```
-Form Pip install pytube3
-```
-> pip3 install pytube3
 ```
 Than you have just to write on terminal:
 ```
