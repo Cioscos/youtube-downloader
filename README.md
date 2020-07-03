@@ -2,6 +2,11 @@
 
 This software written entirely in Python allows you to download videos from YouTube quickly and easily. Just enter the number of videos to download and their links, then he will automatically download them or you can choose the quality or even download only the audio of the video.
 
+## Installer
+[Download installer from Google Drive](https://drive.google.com/file/d/1N7QheHUkSEPyKeE_K8Prwet_6oVXSFSi/view?usp=sharing)
+
+***
+
 If you want you can compile it in a executable file but you have to install Python on your PC. To do it you have to:
 * Go on [Python site](https://www.python.org/downloads/) and download last version.
 * Install Python
