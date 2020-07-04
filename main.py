@@ -68,11 +68,14 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
     # Check if there are some not enable characters and replaces it
     if file_name.find("\"") != -1:
         file_name = file_name.replace('"', '``')
-    elif file_name.find("\\") != -1:
+
+    if file_name.find("\\") != -1:
         file_name = file_name.replace('\\', '-')
-    elif file_name.find('/') != -1:
+
+    if file_name.find('/') != -1:
         file_name = file_name.replace('/', '-')
-    elif file_name.find(':') != -1:
+
+    if file_name.find(':') != -1:
         file_name = file_name.replace(':', ' ')
 
     # If user choose to select the quality
