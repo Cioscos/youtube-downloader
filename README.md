@@ -2,6 +2,11 @@
 
 This software written entirely in Python allows you to download videos from YouTube quickly and easily. Just enter the number of videos to download and their links, then he will automatically download them or you can choose the quality or even download only the audio of the video.
 
+## Installer
+[Download installer from Google Drive](https://drive.google.com/file/d/10b2iX00j936vtRTefam4H_ICByE2l9Ft/view?usp=sharing)
+
+***
+
 If you want you can compile it in a executable file but you have to install Python on your PC. To do it you have to:
 * Go on [Python site](https://www.python.org/downloads/) and download last version.
 * Install Python
@@ -26,16 +31,17 @@ git clone https://github.com/Cioscos/youtube-downloader.git
 
 If you get an error message, you may need to install [Visual C++ Redistributable](https://support.microsoft.com/en-ca/help/2977003/the-latest-supported-visual-c-downloads).
 
-## Linux
-If you are on Linux you have to install Python from your package manager with FFmpeg too.
+## How to run
+### On windows
+To run YouTube-Downloader without create an executable file, you just need to install Python 3.X (link below)
+Then you can double-click on main.py file in the root directory! Take care that you don't have to move the position of main.py or of the other folder.
 
-#### On Ubuntu
+### On Linux
+If you are on Linux you have to install Python from your package manager with FFmpeg too. Next it's the same of Windows.
+
+#### Example on Ubuntu system
 ```
 > sudo apt install ffmpeg
-```
-Form Pip install pytube3
-```
-> pip3 install pytube3
 ```
 Than you have just to write on terminal:
 ```
