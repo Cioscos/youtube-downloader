@@ -58,6 +58,11 @@ def main():
         else:
             choose = input('Hai inserito una scelta non accettata. Inserisci 1,2,3 o 4:')
 
+    if platform.system() == 'Windows':
+        os.system('pause')
+    else:
+        input('Premere un tasto per continuare')
+
     sys.exit(ExitStatus.success)
 
 
@@ -127,8 +132,8 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
 
         # It will be true when the iterator will find a point inside the searched name
         point_found = False
-        # Type of the estension
-        estension = ''
+        # Type of the extension
+        extension = ''
 
         for i in listdir:
             # if the current file is video_file
@@ -138,12 +143,12 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                     if i[j] == '.':
                         # if the point is reached, point_found is true and adds the point to estension
                         point_found = True
-                        estension += i[j]
+                        extension += i[j]
                     elif point_found:
-                        estension += i[j]
+                        extension += i[j]
 
         # Name of video file source
-        input_name = 'video_file' + estension
+        input_name = 'video_file' + extension
 
         # Calls to FFmpeg
         if platform.system() == 'Windows':
@@ -175,7 +180,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
         else:
             print("\nC'è un problema con il muxing del video")
 
-        os.remove('./' + 'video_file' + estension)
+        os.remove('./' + 'video_file' + extension)
         os.remove('./audio_file.mp4')
     else:
         alright = True
@@ -231,12 +236,12 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 try:
                     (
                         ffmpeg
-                            .input('./' + file_name)
-                            .output('./' + file_name.replace('mp4', 'mp3'))
-                            .global_args('-loglevel', 'error')
-                            .global_args('-f', 'mp3')
-                            .global_args('-ab', '192000')
-                            .run()
+                        .input('./' + file_name)
+                        .output('./' + file_name.replace('mp4', 'mp3'))
+                        .global_args('-loglevel', 'error')
+                        .global_args('-f', 'mp3')
+                        .global_args('-ab', '192000')
+                        .run()
                     )
                 except ffmpeg.Error as e:
                     print(e.stderr.decode(), file=sys.stderr)
@@ -269,44 +274,51 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 print("\nProblema con il download del file")
 
 
+def print_error(error):
+    print(error)
+    if platform.system() == 'Windows':
+        os.system('pause')
+    else:
+        input('Premere un tasto per continuare')
+    sys.exit(ExitStatus.failure)
+
+
 def choosing_video(choose, links):
     # Showing all details for videos and downloading them one by one
     for i in range(0, len(links)):
         link = links[i]
 
         # Taking info about video
-        yt = YouTube(link)
-
-        print("\nDettagli del video ", i + 1, "\n")
-        print("Titolo del video:          ", yt.title)
-        print("Numero di visualizzazioni: ", yt.views)
-        print("Lunghezza del video:       ", yt.length, "secondi")
-
-        print("\nDownloading video number ", i + 1)
-
-        if choose == '1':
-            # Download directly without muxing from youtube in 720p
-            download(yt)
-        elif choose == '2':
-            # Filters results for type video, mp4.
-            stream = yt.streams.filter(type='video', progressive=False)
-            stream_dict = stream.itag_index
-
-            print("\nTutte le opzioni disponibili per il download:\n")
-            index = 1
-            for key, value in stream_dict.items():
-                print(index, ')', value)
-                index += 1
-
-            tag = int(input("\nInserisci l'itag del tuo stream preferito da scaricare:   "))
-            download(yt, True, tag=tag)
+        try:
+            yt = YouTube(link)
+        except Exception as e:
+            print_error(e)
         else:
-            download(yt, audio_only=True)
+            print("\nDettagli del video ", i + 1, "\n")
+            print("Titolo del video:          ", yt.title)
+            print("Numero di visualizzazioni: ", yt.views)
+            print("Lunghezza del video:       ", yt.length, "secondi")
 
-    if platform.system() == 'Windows':
-        os.system('pause')
-    else:
-        input('Premere un tasto per continuare')
+            print("\nDownloading video number ", i + 1)
+
+            if choose == '1':
+                # Download directly without muxing from youtube in 720p
+                download(yt)
+            elif choose == '2':
+                # Filters results for type video, mp4.
+                stream = yt.streams.filter(type='video', progressive=False)
+                stream_dict = stream.itag_index
+
+                print("\nTutte le opzioni disponibili per il download:\n")
+                index = 1
+                for key, value in stream_dict.items():
+                    print(index, ')', value)
+                    index += 1
+
+                tag = int(input("\nInserisci l'itag del tuo stream preferito da scaricare:   "))
+                download(yt, True, tag=tag)
+            else:
+                download(yt, audio_only=True)
 
 
 if __name__ == '__main__':

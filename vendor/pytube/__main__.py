@@ -112,18 +112,8 @@ class YouTube:
             self.player_config_args = get_ytplayer_config(self.watch_html)["args"]
 
             # Fix for KeyError: 'title' issue #434
-            if "title" not in self.player_config_args:# type: ignore
-                i_start = self.watch_html.lower().index("<title>") + len("<title>")
-                i_end = self.watch_html.lower().index("</title>")
-                title = self.watch_html[i_start:i_end].strip()
-                while title == "YouTube":
-                    self.prefetch()
-                    i_start = self.watch_html.lower().index("<title>") + len("<title>")
-                    i_end = self.watch_html.lower().index("</title>")
-                    title = self.watch_html[i_start:i_end].strip()
-                
-                index = title.lower().rfind(" - youtube")
-                title = title[:index] if index > 0 else title
+            if "title" not in self.player_config_args:  # type: ignore
+                title = json.loads(self.player_config_args['player_response'])['videoDetails']['title']
                 self.player_config_args["title"] = unescape(title)
 
         # https://github.com/nficano/pytube/issues/165
@@ -323,7 +313,7 @@ class YouTube:
 
         :param callable func:
             A callback function that takes ``stream``, ``chunk``,
-            ``file_handle``, ``bytes_remaining`` as parameters.
+             and ``bytes_remaining`` as parameters.
 
         :rtype: None
 
@@ -334,7 +324,7 @@ class YouTube:
         """Register a download complete callback function post initialization.
 
         :param callable func:
-            A callback function that takes ``stream`` and  ``file_handle``.
+            A callback function that takes ``stream`` and  ``file_path``.
 
         :rtype: None
 
