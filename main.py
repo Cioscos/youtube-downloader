@@ -292,7 +292,7 @@ def choosing_video(choose, links):
         try:
             yt = YouTube(link)
         except Exception as e:
-            print_error(e)
+            print_error(str(e))
         else:
             print("\nDettagli del video ", i + 1, "\n")
             print("Titolo del video:          ", yt.title)
