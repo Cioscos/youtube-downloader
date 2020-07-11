@@ -83,14 +83,16 @@ def acceptable_name_for_ffmpeg(file_name):
         file_name = file_name.replace('/', '-')
 
     if file_name.find(':') != -1:
-        file_name = file_name.replace(':', ' ')
+        file_name = file_name.replace(':', '')
+
+    if file_name.find('|') != -1:
+        file_name = file_name.replace('|', '')
     return file_name
 
 
 def download(yt, separate_tracks=False, tag=None, audio_only=False):
     # It creates the file name
-    file_name = yt.title + '.mp4'
-
+    file_name = yt.title
     file_name = acceptable_name_for_ffmpeg(file_name)
 
     # Taking link of thumbnails from youtube
@@ -104,7 +106,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
     # Install the opener for Urllib request
     urllib.request.install_opener(opener)
     # Download image from link
-    urllib.request.urlretrieve(thumb_url, 'thumb.jpg')
+    urllib.request.urlretrieve(thumb_url, 'thumb.png')
 
     # If user choose to select the quality
     if separate_tracks:
@@ -124,28 +126,6 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             except Exception as e:
                 print(str(e))
                 alright = False
-
-        # Download just the audio
-        try:
-            ys = yt.streams.get_audio_only()
-        except Exception as e:
-            print(str(e))
-            alright = False
-        else:
-            try:
-                ys.download(filename='audio_file')
-            except Exception as e:
-                print(str(e))
-                alright = False
-
-        # Check if something went wrong
-        if alright:
-            print('finito!')
-        else:
-            print("\nC'è un problema con il download di questo video.")
-            return
-
-        print("\nMuxing in corso...", end='')
 
         # Create list of file and dir in root
         os.chdir('./')
@@ -169,7 +149,35 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                         extension += i[j]
 
         # Name of video file source
-        input_name = 'video_file' + extension
+        file_name = file_name + extension
+        video_input_name = 'video_file' + extension
+        audio_input_name = 'audio_file' + extension
+
+        # Download just the audio
+        try:
+            if extension == '.webm':
+                stream = yt.streams.filter(audio_codec='opus').order_by('abr')
+                ys = stream.last()
+            else:
+                ys = yt.streams.get_audio_only()
+        except Exception as e:
+            print(str(e))
+            alright = False
+        else:
+            try:
+                ys.download(filename='audio_file')
+            except Exception as e:
+                print(str(e))
+                alright = False
+
+        # Check if something went wrong
+        if alright:
+            print('finito!')
+        else:
+            print("\nC'è un problema con il download di questo video.")
+            return
+
+        print("\nMuxing in corso...", end='')
 
         # Calls to FFmpeg
         if platform.system() == 'Windows':
@@ -177,19 +185,19 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 command = "ffmpeg_x64 -i {video} -i {audio}" \
                           " -loglevel warning" \
                           " -c:v copy" \
-                          " -c:a aac" \
+                          " -c:a copy" \
                           " {output}" \
-                    .format(video='../' + input_name,
-                            audio='../audio_file.mp4',
+                    .format(video='../' + video_input_name,
+                            audio='../' + audio_input_name,
                             output="\"../" + file_name + "\"")
             else:
                 command = "ffmpeg_x86 -i {video} -i {audio}" \
                           " -loglevel warning" \
                           " -c:v copy" \
-                          " -c:a aac" \
+                          " -c:a copy" \
                           " {output}" \
-                    .format(video='../' + input_name,
-                            audio='../audio_file.mp4',
+                    .format(video='../' + video_input_name,
+                            audio='../' + audio_input_name,
                             output="\"../" + file_name + "\"")
 
             try:
@@ -198,8 +206,8 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 print(str(e))
                 alright = False
         else:
-            video_stream = ffmpeg.input('./' + input_name)
-            audio_stream = ffmpeg.input('./audio_file.mp4')
+            video_stream = ffmpeg.input('./' + video_input_name)
+            audio_stream = ffmpeg.input('./' + audio_input_name)
 
             try:
                 ffmpeg.output(audio_stream, video_stream, file_name).run(quiet=True)
@@ -207,51 +215,59 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 print(e.stderr.decode(), file=sys.stderr)
                 alright = False
 
-        os.remove('./audio_file.mp4')
-        os.remove('./' + 'video_file' + extension)
+        try:
+            os.remove(audio_input_name)
+            os.remove(video_input_name)
+        except Exception as e:
+            print(str(e))
 
         # Check if something went wrong
         if alright:
             print('finito!')
         else:
             print("\nC'è un problema con il muxing del video")
-            os.remove('./' + 'video_file' + extension)
+            os.remove(video_input_name)
             return
 
-        print('Creazione anteprima...', end='')
+        # Check if the video is in webm format and try to convert it in mp4
+        if extension != '.webm':
+            print('Creazione anteprima...', end='')
 
-        # Apply thumbnail on video file
-        if platform.system() == 'Windows':
-            if platform.architecture()[0] == '64bit':
-                command = "ffmpeg_x64 -i {video} -i {image}" \
-                          " -loglevel quiet" \
-                          " -map 1 -map 0" \
-                          " -c copy -disposition:0 " \
-                          "attached_pic ../out.mp4"\
-                    .format(video="\"../" + input_name + "\"", image='../thumb.jpg')
+            # Apply thumbnail on video file
+            if platform.system() == 'Windows':
+                if platform.architecture()[0] == '64bit':
+                    command = "ffmpeg_x64 -i {video} -i {image}" \
+                              " -loglevel warning" \
+                              " -map 0 -map 1" \
+                              " -c copy" \
+                              " -c:v:1 png" \
+                              " -disposition:v:1 attached_pic" \
+                              " ../out{extension}"\
+                        .format(video="\"../" + file_name + "\"", image='../thumb.png', extension=extension)
+                else:
+                    command = "ffmpeg_x86 -i {video} -i {image}" \
+                              " -loglevel warning" \
+                              " -map 0 -map 1" \
+                              " -c copy" \
+                              " -c:v:1 png" \
+                              " -disposition:v:1 attached_pic" \
+                              " ../out{extension}" \
+                        .format(video="\"../" + file_name + "\"", image='../thumb.png', extension=extension)
+
+                try:
+                    subprocess.call(command, shell=True, cwd='./ffmpeg/')
+                except Exception as e:
+                    print(str(e))
+                    alright = False
+
+            if alright:
+                print('finito!')
+                os.remove(file_name)
+                os.rename('out' + extension, file_name)
             else:
-                command = "ffmpeg_x86 -i {video} -i {image}" \
-                          " -loglevel quiet" \
-                          " -map 1 -map 0" \
-                          " -c copy -disposition:0 " \
-                          "attached_pic ../out.mp4"\
-                    .format(video="\"../" + input_name + "\"", image='../thumb.jpg')
+                print("C'è un problema con la creazione dell'anteprima")
 
-            try:
-                subprocess.call(command, shell=True, cwd='./ffmpeg/')
-            except Exception as e:
-                print(str(e))
-                alright = False
-
-        if alright:
-            print('finito!')
-            os.remove(input_name)
-            os.rename('out.mp4', input_name)
-        else:
-            print("C'è un problema con la creazione dell'anteprima")
-
-        os.remove('thumb.jpg')
-
+        os.remove('thumb.png')
     else:
         alright = True
 
@@ -344,7 +360,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                               " -c:v copy -c:a copy " \
                               "-id3v2_version 3 " \
                               "../out.mp3"\
-                        .format(audio="\"../" + file_name.replace('mp4', 'mp3') + "\"", image='../thumb.jpg')
+                        .format(audio="\"../" + file_name.replace('mp4', 'mp3') + "\"", image='../thumb.png')
                 else:
                     command = "ffmpeg_x86 -i {audio} -i {image}" \
                               " -loglevel quiet" \
@@ -352,7 +368,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                               " -c:v copy -c:a copy " \
                               "-id3v2_version 3 " \
                               "../out.mp3"\
-                        .format(audio="\"../" + file_name.replace('mp4', 'mp3') + "\"", image='../thumb.jpg')
+                        .format(audio="\"../" + file_name.replace('mp4', 'mp3') + "\"", image='../thumb.png')
 
                 try:
                     subprocess.call(command, shell=True, cwd='./ffmpeg/')
@@ -369,7 +385,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             else:
                 print("C'è un problema con la creazione dell'anteprima")
 
-            os.remove('thumb.jpg')
+            os.remove('thumb.png')
 
         else:
             # If user wants to download in 720p
@@ -407,14 +423,14 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                                       "-map 1 -map 0 " \
                                       "-c copy -disposition:0 " \
                                       "attached_pic ../out.mp4"\
-                                .format(video="\"../" + file_name + "\"", image='../thumb.jpg')
+                                .format(video="\"../" + file_name + "\"", image='../thumb.png')
                         else:
-                            command = "ffmpeg_x64 -i {video} -i {image} " \
+                            command = "ffmpeg_x86 -i {video} -i {image} " \
                                       "-loglevel warning " \
                                       "-map 1 -map 0 " \
                                       "-c copy -disposition:0 " \
                                       "attached_pic ../out.mp4"\
-                                .format(video="\"../" + file_name + "\"", image='../thumb.jpg')
+                                .format(video="\"../" + file_name + "\"", image='../thumb.png')
 
                         try:
                             subprocess.call(command, shell=True, cwd='./ffmpeg/')
@@ -429,7 +445,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                     else:
                         print("C'è un problema con la creazione dell'anteprima")
 
-                    os.remove('thumb.jpg')
+                    os.remove('thumb.png')
 
             # Check is something went wrong
             if not alright:
