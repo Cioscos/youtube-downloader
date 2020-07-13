@@ -259,6 +259,21 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 except Exception as e:
                     print(str(e))
                     alright = False
+            else:
+                video = ffmpeg.input(file_name)
+                audio = ffmpeg.input('thumb.png')
+                try:
+                    (
+                        ffmpeg
+                        .output(video, audio, 'out' + extension, c='copy', **{'c:v:1': 'png'}, **{'disposition:v:1': 'attached_pic'})
+                        .global_args('-map', '0')
+                        .global_args('-map', '1')
+                        .global_args('-loglevel', 'error')
+                        .run()
+                    )
+                except ffmpeg.Error as e:
+                    print(e.stderr.decode(), file=sys.stderr)
+                    alright = False
 
             if alright:
                 print('finito!')
@@ -297,6 +312,8 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             # Create list of file and dir in root
             os.chdir('./')
             listdir = os.listdir(os.getcwd())
+
+            file_name = acceptable_name_for_ffmpeg(yt.title) + '.mp4'
 
             for i in listdir:
                 if i.find('.mp4') != -1:
@@ -355,7 +372,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             if platform.system() == 'Windows':
                 if platform.architecture()[0] == '64bit':
                     command = "ffmpeg_x64 -i {audio} -i {image}" \
-                              " -loglevel quiet" \
+                              " -loglevel error" \
                               " -map 0:0 -map 1:0" \
                               " -c:v copy -c:a copy " \
                               "-id3v2_version 3 " \
@@ -363,7 +380,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                         .format(audio="\"../" + file_name.replace('mp4', 'mp3') + "\"", image='../thumb.png')
                 else:
                     command = "ffmpeg_x86 -i {audio} -i {image}" \
-                              " -loglevel quiet" \
+                              " -loglevel error" \
                               " -map 0:0 -map 1:0" \
                               " -c:v copy -c:a copy " \
                               "-id3v2_version 3 " \
@@ -374,6 +391,20 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                     subprocess.call(command, shell=True, cwd='./ffmpeg/')
                 except Exception as e:
                     print(str(e))
+                    alright = False
+            else:
+                audio = ffmpeg.input(file_name.replace('mp4', 'mp3'))
+                try:
+                    (
+                        ffmpeg
+                        .output(audio, 'out.mp3', c='copy', **{'c:v:1': 'png'}, **{'disposition:v:1': 'attached_pic'})
+                        .global_args('-map', '0')
+                        .global_args('-map', '1')
+                        .global_args('-loglevel', 'error')
+                        .run()
+                    )
+                except ffmpeg.Error as e:
+                    print(e.stderr.decode(), file=sys.stderr)
                     alright = False
 
             if alright:
