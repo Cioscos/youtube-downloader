@@ -297,7 +297,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                 alright = False
             else:
                 try:
-                    ys.download()
+                    ys.download(filename='just_audio')
                 except Exception as e:
                     print(str(e))
                     alright = False
@@ -316,7 +316,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             file_name = acceptable_name_for_ffmpeg(yt.title) + '.mp4'
 
             for i in listdir:
-                if i.find('.mp4') != -1:
+                if i.find('just_audio') != -1:
                     os.rename(i, file_name)
 
             print("\nMuxing in corso...", end='')
@@ -393,13 +393,15 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                     print(str(e))
                     alright = False
             else:
-                audio = ffmpeg.input(file_name.replace('mp4', 'mp3'))
+                audio = ffmpeg.input('./' + file_name.replace('mp4', 'mp3'))
+                image = ffmpeg.input('thumb.png')
                 try:
-                    (
+                    imp = (
                         ffmpeg
-                        .output(audio, 'out.mp3', c='copy', **{'c:v:1': 'png'}, **{'disposition:v:1': 'attached_pic'})
-                        .global_args('-map', '0')
-                        .global_args('-map', '1')
+                        .output(audio, image, 'out.mp3', **{'c:v': 'copy'}, **{'c:a': 'copy'})
+                        .global_args('-map', '0:0')
+                        .global_args('-map', '1:0')
+                        .global_args('-id3v2_version', '3')
                         .global_args('-loglevel', 'error')
                         .run()
                     )
@@ -462,11 +464,26 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
                                       "-c copy -disposition:0 " \
                                       "attached_pic ../out.mp4"\
                                 .format(video="\"../" + file_name + "\"", image='../thumb.png')
-
                         try:
                             subprocess.call(command, shell=True, cwd='./ffmpeg/')
                         except Exception as e:
                             print(str(e))
+                            alright = False
+                    else:
+                        video = ffmpeg.input(file_name)
+                        audio = ffmpeg.input('thumb.png')
+                        try:
+                            (
+                                ffmpeg
+                                    .output(video, audio, 'out.mp4', c='copy', **{'c:v:1': 'png'},
+                                            **{'disposition:v:1': 'attached_pic'})
+                                    .global_args('-map', '0')
+                                    .global_args('-map', '1')
+                                    .global_args('-loglevel', 'error')
+                                    .run()
+                            )
+                        except ffmpeg.Error as e:
+                            print(e.stderr.decode(), file=sys.stderr)
                             alright = False
 
                     if alright:
@@ -481,6 +498,7 @@ def download(yt, separate_tracks=False, tag=None, audio_only=False):
             # Check is something went wrong
             if not alright:
                 print("\nProblema con il download del file")
+    clear_screen()
 
 
 def print_error(error):
