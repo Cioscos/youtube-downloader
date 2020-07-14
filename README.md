@@ -1,4 +1,4 @@
-![GitHub commit](https://github.com/Cioscos/youtube-downloader/commits/master)
+[![GitHub commit](https://img.shields.io/github/last-commit/Cioscos/youtube-downloader)](https://github.com/Cioscos/youtube-downloader/commits/master)
 [![GitHub license](https://img.shields.io/badge/License-Creative%20Commons%20Attribution%204.0%20International-blue)](https://github.com/Cioscos/youtube-downloader.git/blob/master/LICENSE)
 # YouTube downloader
 
