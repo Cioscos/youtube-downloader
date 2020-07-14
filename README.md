@@ -1,11 +1,11 @@
-![GitHub commit](https://img.shields.io/github/last-commit/Cioscos/youtube-downloader)
+![GitHub commit](https://github.com/Cioscos/youtube-downloader/commits/master)
 [![GitHub license](https://img.shields.io/badge/License-Creative%20Commons%20Attribution%204.0%20International-blue)](https://github.com/Cioscos/youtube-downloader.git/blob/master/LICENSE)
 # YouTube downloader
 
 This software written entirely in Python allows you to download videos from YouTube quickly and easily. Just enter the number of videos to download and their links, then he will automatically download them or you can choose the quality or even download only the audio of the video.
 
 ## Installer
-[Download installer from Google Drive](https://drive.google.com/file/d/14Sdt6uI0M0ascg580mo6-sOaJ90qKWsA/view?usp=sharing)
+[Download installer from Google Drive](https://drive.google.com/file/d/1_PhvjHTxAeZY2wKjwMVQeB1uZ2CiiZ2u/view?usp=sharing)
 
 ***
 
